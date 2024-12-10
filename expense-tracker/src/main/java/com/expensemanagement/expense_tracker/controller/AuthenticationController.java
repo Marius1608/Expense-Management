@@ -5,8 +5,13 @@ import com.expensemanagement.expense_tracker.dto.AuthenticationResponse;
 import com.expensemanagement.expense_tracker.dto.RegisterRequest;
 import com.expensemanagement.expense_tracker.service.AuthenticationService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.HashMap;
+
+import static javax.swing.UIManager.put;
 
 @RestController
 @RequestMapping("/api/auth")
@@ -17,12 +22,15 @@ public class AuthenticationController {
     private AuthenticationService authenticationService;
 
     @PostMapping("/login")
-    public ResponseEntity<AuthenticationResponse> login(@RequestBody AuthenticationRequest request) {
-        return ResponseEntity.ok(authenticationService.authenticate(request));
-    }
-
-    @PostMapping("/register")
-    public ResponseEntity<AuthenticationResponse> register(@RequestBody RegisterRequest request) {
-        return ResponseEntity.ok(authenticationService.register(request));
+    public ResponseEntity<?> login(@RequestBody AuthenticationRequest request) {
+        try {
+            AuthenticationResponse response = authenticationService.authenticate(request);
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body(new HashMap<String, String>() {{
+                        put("message", "Invalid credentials");
+                    }});
+        }
     }
 }
