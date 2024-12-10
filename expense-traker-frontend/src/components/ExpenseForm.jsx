@@ -22,22 +22,36 @@ export default function ExpenseForm() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      const response = await fetch('http://localhost:8080/api/expenses', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
-        },
-        body: JSON.stringify(expenseData)
-      });
-      
-      if (response.ok) {
+        // Convertim datele în formatul așteptat de backend
+        const formattedData = {
+            description: expenseData.description,
+            amount: new expenseData.amount, 
+            date: new Date(expenseData.date).toISOString(), 
+            status: 'PENDING',
+            category: {
+                id: parseInt(expenseData.categoryId) 
+            }
+        };
+
+        const response = await fetch('http://localhost:8080/api/expenses', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${localStorage.getItem('token')}`
+            },
+            body: JSON.stringify(formattedData)
+        });
+        
+        if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(errorData.message || 'Failed to create expense');
+        }
+        
         navigate('/expenses');
-      }
     } catch (error) {
-      console.error('Failed to create expense:', error);
+        console.error('Failed to create expense:', error);
     }
-  };
+};
 
   return (
     <Box sx={{ maxWidth: 600, mx: 'auto' }}>

@@ -48,6 +48,7 @@ public class SecurityConfig {
                         .requestMatchers("/api/admin/**").hasRole("ADMIN")
                         .requestMatchers("/api/accountant/**").hasRole("ACCOUNTANT")
                         .requestMatchers("/api/expenses/**").authenticated()
+                        .requestMatchers("/api/users/**").hasRole("ADMIN")
                         .anyRequest().authenticated()
                 )
                 .sessionManagement(session -> session
@@ -59,3 +60,4 @@ public class SecurityConfig {
     }
 
 }
+

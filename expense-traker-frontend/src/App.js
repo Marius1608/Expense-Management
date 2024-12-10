@@ -10,6 +10,11 @@ import Layout from './components/Layout';
 import ExpenseList from './components/ExpenseList';
 import ExpenseForm from './components/ExpenseForm';
 import Reports from './components/Reports';
+import AdminDashboard from './components/AdminDashboard';
+import AdminReports from './components/AdminReports';
+import ExpenseRequest from './components/ExpenseRequest';
+import AccountantDashboard from './components/AccountantDashboard';
+import DepartmentHeadDashboard from './components/DepartmentHeadDashboard';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 
 const theme = createTheme({
@@ -56,11 +61,17 @@ const theme = createTheme({
   },
 });
 
-const ProtectedRoute = ({ children }) => {
-  const { token } = useAuth();
+const ProtectedRoute = ({ children, allowedRoles = [] }) => {
+  const { token, user } = useAuth();
+  
   if (!token) {
     return <Navigate to="/login" replace />;
   }
+  
+  if (allowedRoles.length > 0 && !allowedRoles.includes(user?.role)) {
+    return <Navigate to="/" replace />;
+  }
+  
   return children;
 };
 
@@ -74,6 +85,7 @@ function App() {
             <Routes>
               <Route path="/login" element={<Login />} />
               <Route path="/register" element={<Register />} />
+              
               <Route
                 path="/"
                 element={
@@ -82,7 +94,82 @@ function App() {
                   </ProtectedRoute>
                 }
               >
+                {/* Common Routes */}
                 <Route index element={<Dashboard />} />
+                
+                {/* Employee Routes */}
+                <Route
+                  path="expense-requests"
+                  element={
+                    <ProtectedRoute allowedRoles={['EMPLOYEE']}>
+                      <ExpenseRequest />
+                    </ProtectedRoute>
+                  }
+                />
+                
+                {/* Admin Routes */}
+                <Route
+                  path="admin"
+                  element={
+                    <ProtectedRoute allowedRoles={['ADMIN']}>
+                      <AdminDashboard />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="admin/reports"
+                  element={
+                    <ProtectedRoute allowedRoles={['ADMIN']}>
+                      <AdminReports />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="admin/users"
+                  element={
+                    <ProtectedRoute allowedRoles={['ADMIN']}>
+                      <AdminDashboard />
+                    </ProtectedRoute>
+                  }
+                />
+                
+                {/* Accountant Routes */}
+                <Route
+                  path="accountant"
+                  element={
+                    <ProtectedRoute allowedRoles={['ACCOUNTANT']}>
+                      <AccountantDashboard />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="expenses/review"
+                  element={
+                    <ProtectedRoute allowedRoles={['ACCOUNTANT']}>
+                      <ExpenseList />
+                    </ProtectedRoute>
+                  }
+                />
+                
+                {/* Department Head Routes */}
+                <Route
+                  path="department"
+                  element={
+                    <ProtectedRoute allowedRoles={['DEPARTMENT_HEAD']}>
+                      <DepartmentHeadDashboard />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="expenses/approve"
+                  element={
+                    <ProtectedRoute allowedRoles={['DEPARTMENT_HEAD']}>
+                      <ExpenseList />
+                    </ProtectedRoute>
+                  }
+                />
+                
+                {/* Routes accessible by all authenticated users */}
                 <Route path="expenses" element={<ExpenseList />} />
                 <Route path="expenses/new" element={<ExpenseForm />} />
                 <Route path="reports" element={<Reports />} />

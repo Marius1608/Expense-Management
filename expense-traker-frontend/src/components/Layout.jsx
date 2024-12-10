@@ -10,19 +10,30 @@ import {
   Dashboard as DashboardIcon,
   Receipt as ReceiptIcon,
   Assessment as AssessmentIcon,
-  Logout as LogoutIcon
+  Logout as LogoutIcon,
+  People as PeopleIcon
 } from '@mui/icons-material';
 import { useAuth } from '../contexts/AuthContext';
 
 const Layout = () => {
   const [drawerOpen, setDrawerOpen] = useState(false);
   const navigate = useNavigate();
-  const { logout } = useAuth();
+  const { logout, user } = useAuth();  // Added user here
 
   const menuItems = [
     { text: 'Dashboard', icon: <DashboardIcon />, path: '/' },
     { text: 'Expenses', icon: <ReceiptIcon />, path: '/expenses' },
-    { text: 'Reports', icon: <AssessmentIcon />, path: '/reports' }
+    { text: 'Reports', icon: <AssessmentIcon />, path: '/reports' },
+
+    ...(user?.role === "ADMIN" ? [   
+      { text: 'User Management', icon: <PeopleIcon />, path: '/admin/users' },
+      { text: 'Admin Reports', icon: <AssessmentIcon />, path: '/admin/reports' }
+    ] : []),
+
+    ...(user?.role === "EMPLOYEE" ? [   
+      { text: 'My Expense Requests', icon: <ReceiptIcon />, path: '/expense-requests' }
+    ] : [])
+    
   ];
 
   return (
