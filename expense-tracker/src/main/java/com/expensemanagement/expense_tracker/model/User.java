@@ -1,7 +1,10 @@
 package com.expensemanagement.expense_tracker.model;
 import jakarta.persistence.*;
 import lombok.Data;
+import lombok.ToString;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
+@JsonIgnoreProperties({"department.users"})
 @Data
 @Entity
 @Table(name = "users")
@@ -19,5 +22,6 @@ public class User {
 
     @ManyToOne
     @JoinColumn(name = "department_id")
+    @ToString.Exclude
     private Department department;
 }

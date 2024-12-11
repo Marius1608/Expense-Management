@@ -1,10 +1,12 @@
 package com.expensemanagement.expense_tracker.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.*;
 import lombok.Data;
 import java.time.LocalDateTime;
 import java.math.BigDecimal;
 
+@JsonIgnoreProperties({"department.expenses", "user.department"})
 @Data
 @Entity
 @Table(name = "expenses")

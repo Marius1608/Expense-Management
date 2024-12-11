@@ -22,36 +22,47 @@ export default function ExpenseForm() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-        // Convertim datele în formatul așteptat de backend
+        const token = localStorage.getItem('token');
+        if (!token) {
+            console.error('No authentication token found');
+            return;
+        }
+ 
         const formattedData = {
             description: expenseData.description,
-            amount: new expenseData.amount, 
-            date: new Date(expenseData.date).toISOString(), 
+            amount: parseFloat(expenseData.amount),
+            date: new Date(expenseData.date).toISOString(),
             status: 'PENDING',
             category: {
-                id: parseInt(expenseData.categoryId) 
+                id: parseInt(expenseData.categoryId)
             }
         };
-
+ 
         const response = await fetch('http://localhost:8080/api/expenses', {
             method: 'POST',
             headers: {
+                'Authorization': `Bearer ${token}`,
                 'Content-Type': 'application/json',
-                'Authorization': `Bearer ${localStorage.getItem('token')}`
+                'Accept': 'application/json'
             },
             body: JSON.stringify(formattedData)
         });
-        
-        if (!response.ok) {
-            const errorData = await response.json();
-            throw new Error(errorData.message || 'Failed to create expense');
+ 
+        if (response.status === 403) {
+            console.error('Access forbidden - insufficient permissions');
+            return;
         }
-        
+ 
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+ 
+        const data = await response.json();
         navigate('/expenses');
     } catch (error) {
-        console.error('Failed to create expense:', error);
+        console.error('Failed to create expense:', error.message);
     }
-};
+ };
 
   return (
     <Box sx={{ maxWidth: 600, mx: 'auto' }}>

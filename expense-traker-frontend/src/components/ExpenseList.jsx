@@ -25,7 +25,18 @@ export default function ExpenseList() {
 
   const fetchExpenses = async () => {
     try {
-      const response = await fetch('http://localhost:8080/api/expenses');
+      const token = localStorage.getItem('token');
+      const response = await fetch('http://localhost:8080/api/expenses', {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      });
+  
+      if (!response.ok) {
+        throw new Error('Failed to fetch expenses');
+      }
+  
       const data = await response.json();
       setExpenses(data);
     } catch (error) {
