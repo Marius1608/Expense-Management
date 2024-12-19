@@ -34,7 +34,7 @@ public class AdminService {
     @Autowired
     private PasswordEncoder passwordEncoder;
 
-    // User Management Methods
+    @Transactional
     public List<User> getAllUsers() {
         return userRepository.findAll();
     }
@@ -73,7 +73,6 @@ public class AdminService {
         logAuditEvent(null, "DELETE_USER", "Deleted user: " + user.getUsername());
     }
 
-    // Report Generation Methods
     public Map<String, Object> generateExpenseSummary(LocalDate startDate, LocalDate endDate) {
         List<Expense> expenses = expenseRepository.findByDateBetween(startDate, endDate);
 
@@ -138,7 +137,6 @@ public class AdminService {
                 .collect(Collectors.toList());
     }
 
-    // Audit Log Methods
     public List<AuditLog> getAuditLogs(LocalDate startDate, LocalDate endDate) {
         if (startDate == null || endDate == null) {
             return auditLogRepository.findAll();
@@ -158,7 +156,6 @@ public class AdminService {
         auditLogRepository.save(log);
     }
 
-    // Category Management Methods
     public List<ExpenseCategory> getAllCategories() {
         return categoryRepository.findAll();
     }

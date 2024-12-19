@@ -4,10 +4,13 @@ import com.expensemanagement.expense_tracker.model.User;
 import com.expensemanagement.expense_tracker.service.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
+import org.springframework.stereotype.Component;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/api/users")
+@CrossOrigin(origins = "http://localhost:3000")
+
 public class UserController {
     @Autowired
     private UserService userService;

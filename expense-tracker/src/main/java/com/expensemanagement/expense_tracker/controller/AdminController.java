@@ -1,11 +1,15 @@
 package com.expensemanagement.expense_tracker.controller;
 
 import com.expensemanagement.expense_tracker.model.*;
+import com.expensemanagement.expense_tracker.repository.UserRepository;
 import com.expensemanagement.expense_tracker.service.AdminService;
+import com.expensemanagement.expense_tracker.service.DepartmentService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.format.annotation.DateTimeFormat;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDate;
@@ -14,79 +18,234 @@ import java.util.Map;
 
 @RestController
 @RequestMapping("/api/admin")
-@PreAuthorize("hasRole('ADMIN')")
+@CrossOrigin(origins = "http://localhost:3000")
 public class AdminController {
 
     @Autowired
     private AdminService adminService;
 
-    // User Management Endpoints
+    @Autowired
+    private UserRepository userRepository;
+
+    @Autowired
+    private DepartmentService departmentService;
+
+
     @GetMapping("/users")
-    public ResponseEntity<List<User>> getAllUsers() {
-        return ResponseEntity.ok(adminService.getAllUsers());
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<List<User>> getAllUsers(Authentication authentication) {
+        try {
+            String username = authentication.getName();
+            User admin = userRepository.findByUsername(username);
+
+            if (admin == null) {
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+            }
+
+            return ResponseEntity.ok(adminService.getAllUsers());
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+        }
     }
 
     @PostMapping("/users")
-    public ResponseEntity<User> createUser(@RequestBody User user) {
-        return ResponseEntity.ok(adminService.createUser(user));
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<User> createUser(@RequestBody User user, Authentication authentication) {
+        try {
+            String username = authentication.getName();
+            User admin = userRepository.findByUsername(username);
+
+            if (admin == null) {
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+            }
+
+            if (user.getPassword() == null || user.getPassword().trim().isEmpty()) {
+                return ResponseEntity.badRequest().build();
+            }
+
+            return ResponseEntity.ok(adminService.createUser(user));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+        }
     }
 
     @PutMapping("/users/{id}")
-    public ResponseEntity<User> updateUser(@PathVariable Long id, @RequestBody User user) {
-        user.setId(id);
-        return ResponseEntity.ok(adminService.updateUser(user));
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<User> updateUser(@PathVariable Long id, @RequestBody User user, Authentication authentication) {
+        try {
+            String username = authentication.getName();
+            User admin = userRepository.findByUsername(username);
+
+            if (admin == null) {
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+            }
+
+            user.setId(id);
+            return ResponseEntity.ok(adminService.updateUser(user));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+        }
     }
 
     @DeleteMapping("/users/{id}")
-    public ResponseEntity<Void> deleteUser(@PathVariable Long id) {
-        adminService.deleteUser(id);
-        return ResponseEntity.ok().build();
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<Void> deleteUser(@PathVariable Long id, Authentication authentication) {
+        try {
+            String username = authentication.getName();
+            User admin = userRepository.findByUsername(username);
+
+            if (admin == null) {
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+            }
+
+            adminService.deleteUser(id);
+            return ResponseEntity.ok().build();
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+        }
     }
 
-    // Comprehensive Report Endpoints
+
+    @GetMapping("/departments")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<List<Department>> getAllDepartments(Authentication authentication) {
+        try {
+            String username = authentication.getName();
+            User admin = userRepository.findByUsername(username);
+
+            if (admin == null) {
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+            }
+
+            return ResponseEntity.ok(departmentService.getAllDepartments());
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+        }
+    }
+
+
     @GetMapping("/reports/summary")
     public ResponseEntity<Map<String, Object>> getExpenseSummary(
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
-            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate) {
-        return ResponseEntity.ok(adminService.generateExpenseSummary(startDate, endDate));
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate,
+            Authentication authentication) {
+        try {
+            String username = authentication.getName();
+            User admin = userRepository.findByUsername(username);
+
+            if (admin == null) {
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+            }
+
+            return ResponseEntity.ok(adminService.generateExpenseSummary(startDate, endDate));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+        }
     }
 
     @GetMapping("/reports/by-department")
     public ResponseEntity<List<Map<String, Object>>> getExpensesByDepartment(
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
-            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate) {
-        return ResponseEntity.ok(adminService.getExpensesByDepartment(startDate, endDate));
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate,
+            Authentication authentication) {
+        try {
+            String username = authentication.getName();
+            User admin = userRepository.findByUsername(username);
+
+            if (admin == null) {
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+            }
+
+            return ResponseEntity.ok(adminService.getExpensesByDepartment(startDate, endDate));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+        }
     }
 
     @GetMapping("/reports/by-category")
     public ResponseEntity<List<Map<String, Object>>> getExpensesByCategory(
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
-            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate) {
-        return ResponseEntity.ok(adminService.getExpensesByCategory(startDate, endDate));
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate,
+            Authentication authentication) {
+        try {
+            String username = authentication.getName();
+            User admin = userRepository.findByUsername(username);
+
+            if (admin == null) {
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+            }
+
+            return ResponseEntity.ok(adminService.getExpensesByCategory(startDate, endDate));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+        }
     }
 
-    // Audit Log Endpoints
     @GetMapping("/audit-logs")
     public ResponseEntity<List<AuditLog>> getAuditLogs(
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
-            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate) {
-        return ResponseEntity.ok(adminService.getAuditLogs(startDate, endDate));
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate,
+            Authentication authentication) {
+        try {
+            String username = authentication.getName();
+            User admin = userRepository.findByUsername(username);
+
+            if (admin == null) {
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+            }
+
+            return ResponseEntity.ok(adminService.getAuditLogs(startDate, endDate));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+        }
     }
 
-
     @GetMapping("/categories")
-    public ResponseEntity<List<ExpenseCategory>> getAllCategories() {
-        return ResponseEntity.ok(adminService.getAllCategories());
+    public ResponseEntity<List<ExpenseCategory>> getAllCategories(Authentication authentication) {
+        try {
+            String username = authentication.getName();
+            User admin = userRepository.findByUsername(username);
+
+            if (admin == null) {
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+            }
+
+            return ResponseEntity.ok(adminService.getAllCategories());
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+        }
     }
 
     @PostMapping("/categories")
-    public ResponseEntity<ExpenseCategory> createCategory(@RequestBody ExpenseCategory category) {
-        return ResponseEntity.ok(adminService.createCategory(category));
+    public ResponseEntity<ExpenseCategory> createCategory(@RequestBody ExpenseCategory category, Authentication authentication) {
+        try {
+            String username = authentication.getName();
+            User admin = userRepository.findByUsername(username);
+
+            if (admin == null) {
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+            }
+
+            return ResponseEntity.ok(adminService.createCategory(category));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+        }
     }
 
     @DeleteMapping("/categories/{id}")
-    public ResponseEntity<Void> deleteCategory(@PathVariable Long id) {
-        adminService.deleteCategory(id);
-        return ResponseEntity.ok().build();
+    public ResponseEntity<Void> deleteCategory(@PathVariable Long id, Authentication authentication) {
+        try {
+            String username = authentication.getName();
+            User admin = userRepository.findByUsername(username);
+
+            if (admin == null) {
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+            }
+
+            adminService.deleteCategory(id);
+            return ResponseEntity.ok().build();
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+        }
     }
 }

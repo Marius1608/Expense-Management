@@ -23,10 +23,12 @@ import { Edit as EditIcon, Delete as DeleteIcon } from '@mui/icons-material';
 
 export default function AdminDashboard() {
   const [users, setUsers] = useState([]);
+  const [departments, setDepartments] = useState([]);
   const [openDialog, setOpenDialog] = useState(false);
   const [selectedUser, setSelectedUser] = useState(null);
   const [userForm, setUserForm] = useState({
     username: '',
+    password: '',
     email: '',
     role: 'EMPLOYEE',
     departmentId: ''
@@ -35,19 +37,39 @@ export default function AdminDashboard() {
 
   useEffect(() => {
     fetchUsers();
+    fetchDepartments();
   }, []);
 
   const fetchUsers = async () => {
     try {
-      const response = await fetch('http://localhost:8080/api/users', {
+      const response = await fetch('http://localhost:8080/api/admin/users', {
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('token')}`
         }
       });
+      if (!response.ok) throw new Error('Failed to fetch users');
       const data = await response.json();
+      console.log('Fetched users:', data); // Debug log
       setUsers(data);
     } catch (error) {
+      console.error('Error fetching users:', error);
       setError('Failed to fetch users');
+    }
+  };
+
+  const fetchDepartments = async () => {
+    try {
+      const response = await fetch('http://localhost:8080/api/admin/departments', {
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
+        }
+      });
+      if (!response.ok) throw new Error('Failed to fetch departments');
+      const data = await response.json();
+      console.log('Fetched departments:', data); // Debug log
+      setDepartments(data);
+    } catch (error) {
+      console.error('Error fetching departments:', error);
     }
   };
 
@@ -55,6 +77,7 @@ export default function AdminDashboard() {
     if (user) {
       setUserForm({
         username: user.username,
+        password: '', // Password field empty for editing
         email: user.email,
         role: user.role,
         departmentId: user.department?.id || ''
@@ -63,6 +86,7 @@ export default function AdminDashboard() {
     } else {
       setUserForm({
         username: '',
+        password: '',
         email: '',
         role: 'EMPLOYEE',
         departmentId: ''
@@ -79,17 +103,30 @@ export default function AdminDashboard() {
 
   const handleSubmit = async () => {
     try {
+      if (!userForm.password && !selectedUser) {
+        setError('Password is required for new users');
+        return;
+      }
+
       const url = selectedUser 
-        ? `http://localhost:8080/api/users/${selectedUser.id}`
-        : 'http://localhost:8080/api/users';
+        ? `http://localhost:8080/api/admin/users/${selectedUser.id}`
+        : 'http://localhost:8080/api/admin/users';
       
+      const userData = {
+        ...userForm,
+        department: { id: userForm.departmentId }, // Properly format department
+        ...(userForm.password && { password: userForm.password })
+      };
+
+      console.log('Submitting user data:', userData); // Debug log
+
       const response = await fetch(url, {
         method: selectedUser ? 'PUT' : 'POST',
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${localStorage.getItem('token')}`
         },
-        body: JSON.stringify(userForm)
+        body: JSON.stringify(userData)
       });
 
       if (!response.ok) {
@@ -99,6 +136,7 @@ export default function AdminDashboard() {
       handleCloseDialog();
       fetchUsers();
     } catch (error) {
+      console.error('Error saving user:', error);
       setError(error.message);
     }
   };
@@ -106,7 +144,7 @@ export default function AdminDashboard() {
   const handleDelete = async (userId) => {
     if (window.confirm('Are you sure you want to delete this user?')) {
       try {
-        const response = await fetch(`http://localhost:8080/api/users/${userId}`, {
+        const response = await fetch(`http://localhost:8080/api/admin/users/${userId}`, {
           method: 'DELETE',
           headers: {
             'Authorization': `Bearer ${localStorage.getItem('token')}`
@@ -189,6 +227,19 @@ export default function AdminDashboard() {
             />
             <TextField
               fullWidth
+              label="Password"
+              type="password"
+              margin="normal"
+              value={userForm.password}
+              onChange={(e) => setUserForm({
+                ...userForm,
+                password: e.target.value
+              })}
+              required={!selectedUser}
+              helperText={selectedUser ? "Leave blank to keep current password" : ""}
+            />
+            <TextField
+              fullWidth
               label="Email"
               margin="normal"
               value={userForm.email}
@@ -212,6 +263,23 @@ export default function AdminDashboard() {
               <MenuItem value="ACCOUNTANT">Accountant</MenuItem>
               <MenuItem value="DEPARTMENT_HEAD">Department Head</MenuItem>
               <MenuItem value="EMPLOYEE">Employee</MenuItem>
+            </TextField>
+            <TextField
+              select
+              fullWidth
+              label="Department"
+              margin="normal"
+              value={userForm.departmentId}
+              onChange={(e) => setUserForm({
+                ...userForm,
+                departmentId: e.target.value
+              })}
+            >
+              {departments.map((dept) => (
+                <MenuItem key={dept.id} value={dept.id}>
+                  {dept.name}
+                </MenuItem>
+              ))}
             </TextField>
           </Box>
         </DialogContent>

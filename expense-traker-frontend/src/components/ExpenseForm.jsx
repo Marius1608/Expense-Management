@@ -41,9 +41,8 @@ export default function ExpenseForm() {
         const response = await fetch('http://localhost:8080/api/expenses', {
             method: 'POST',
             headers: {
-                'Authorization': `Bearer ${token}`,
                 'Content-Type': 'application/json',
-                'Accept': 'application/json'
+                'Authorization': `Bearer ${token}`
             },
             body: JSON.stringify(formattedData)
         });

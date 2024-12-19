@@ -1,9 +1,6 @@
 package com.expensemanagement.expense_tracker.service;
 
-import com.expensemanagement.expense_tracker.model.Expense;
-import com.expensemanagement.expense_tracker.model.ExpenseReport;
-import com.expensemanagement.expense_tracker.model.ReportStatus;
-import com.expensemanagement.expense_tracker.model.User;
+import com.expensemanagement.expense_tracker.model.*;
 import com.expensemanagement.expense_tracker.repository.ExpenseReportRepository;
 import com.expensemanagement.expense_tracker.repository.ExpenseRepository;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -23,7 +20,9 @@ public class ExpenseReportService {
     private ExpenseRepository expenseRepository;
 
     public ExpenseReport generateReport(LocalDate startDate, LocalDate endDate, User user) {
+        // Now using LocalDate directly without conversion
         List<Expense> expenses = expenseRepository.findByDateBetween(startDate, endDate);
+
         BigDecimal totalAmount = expenses.stream()
                 .map(Expense::getAmount)
                 .reduce(BigDecimal.ZERO, BigDecimal::add);

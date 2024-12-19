@@ -4,10 +4,13 @@ import com.expensemanagement.expense_tracker.dto.ExpenseDTO;
 import com.expensemanagement.expense_tracker.model.Expense;
 import com.expensemanagement.expense_tracker.model.ExpenseStatus;
 import com.expensemanagement.expense_tracker.model.User;
+import com.expensemanagement.expense_tracker.repository.UserRepository;
 import com.expensemanagement.expense_tracker.service.ExpenseService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.Authentication;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
@@ -19,23 +22,50 @@ import java.util.stream.Collectors;
 @RequestMapping("/api/expenses")
 @CrossOrigin("http://localhost:3000")
 public class ExpenseController {
+
     @Autowired
     private ExpenseService expenseService;
 
+    @Autowired
+    private UserRepository userRepository;
+
+    @GetMapping("/pending")
+    public ResponseEntity<List<ExpenseDTO>> getPendingExpenses() {
+        List<Expense> expenses = expenseService.getExpensesByStatus(ExpenseStatus.PENDING);
+        List<ExpenseDTO> expenseDTOs = expenses.stream()
+                .map(this::convertToDTO)
+                .collect(Collectors.toList());
+        return ResponseEntity.ok(expenseDTOs);
+    }
+
+
     @PostMapping
     @PreAuthorize("hasAnyRole('ADMIN', 'ACCOUNTANT', 'EMPLOYEE', 'DEPARTMENT_HEAD')")
-    public ResponseEntity<Expense> createExpense(@RequestBody Expense expense, @AuthenticationPrincipal User currentUser) {
+    public ResponseEntity<Expense> createExpense(@RequestBody Expense expense, Authentication authentication) {
+        try {
 
-        expense.setUser(currentUser);
-        expense.setDepartment(currentUser.getDepartment());
+            String username = authentication.getName();
+            User currentUser = userRepository.findByUsername(username);
 
-        expense.setStatus(ExpenseStatus.PENDING);
-        if (expense.getDate() == null) {
-            expense.setDate(LocalDateTime.now());
+            if (currentUser == null) {
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+            }
+
+            expense.setUser(currentUser);
+            expense.setDepartment(currentUser.getDepartment());
+            expense.setStatus(ExpenseStatus.PENDING);
+
+            if (expense.getDate() == null) {
+                expense.setDate(LocalDateTime.now());
+            }
+
+            Expense savedExpense = expenseService.createExpense(expense);
+            return ResponseEntity.ok(savedExpense);
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
         }
-        Expense savedExpense = expenseService.createExpense(expense);
-        return ResponseEntity.ok(savedExpense);
     }
+
     @GetMapping("/{id}")
     @PreAuthorize("hasAnyRole('ADMIN', 'ACCOUNTANT', 'EMPLOYEE', 'DEPARTMENT_HEAD')")
     public ResponseEntity<Expense> getExpense(@PathVariable Long id) {

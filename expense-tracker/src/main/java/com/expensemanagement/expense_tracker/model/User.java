@@ -1,13 +1,13 @@
 package com.expensemanagement.expense_tracker.model;
+
 import jakarta.persistence.*;
 import lombok.Data;
-import lombok.ToString;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
-@JsonIgnoreProperties({"department.users"})
 @Data
 @Entity
 @Table(name = "users")
+@JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
 public class User {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -20,8 +20,8 @@ public class User {
     @Enumerated(EnumType.STRING)
     private UserRole role;
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "department_id")
-    @ToString.Exclude
+    @JsonIgnoreProperties({"users", "expenses"})
     private Department department;
 }
