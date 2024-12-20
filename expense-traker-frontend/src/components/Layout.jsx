@@ -27,13 +27,15 @@ const Layout = () => {
 
     ...(user?.role === "ADMIN" ? [   
       { text: 'User Management', icon: <PeopleIcon />, path: '/admin/users' },
-      { text: 'Admin Reports', icon: <AssessmentIcon />, path: '/admin/reports' }
     ] : []),
 
-    ...(user?.role === "EMPLOYEE" ? [   
-      { text: 'My Expense Requests', icon: <ReceiptIcon />, path: '/expense-requests' }
-    ] : [])
+    ...(user?.role === "DEPARTMENT_HEAD" ? [   
+      { text: 'Department Reports', icon: <ReceiptIcon />, path: '/department/reports' }
+    ] : []),
     
+    ...(user?.role === "ACCOUNTANT" ? [   
+      { text: 'Financial Reports', icon: <PeopleIcon />, path: '/accountant/reports' },
+    ] : [])
   ];
 
   return (

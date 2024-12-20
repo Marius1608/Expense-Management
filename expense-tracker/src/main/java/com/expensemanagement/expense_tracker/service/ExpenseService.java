@@ -1,7 +1,10 @@
 package com.expensemanagement.expense_tracker.service;
 
+import com.expensemanagement.expense_tracker.model.AuditLog;
 import com.expensemanagement.expense_tracker.model.Expense;
 import com.expensemanagement.expense_tracker.model.ExpenseStatus;
+import com.expensemanagement.expense_tracker.model.User;
+import com.expensemanagement.expense_tracker.repository.AuditLogRepository;
 import com.expensemanagement.expense_tracker.repository.ExpenseRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -9,6 +12,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -17,6 +21,17 @@ import java.util.Map;
 public class ExpenseService {
     @Autowired
     private ExpenseRepository expenseRepository;
+    private AuditLogRepository auditLogRepository;
+    private UserService userService;
+
+    @Autowired
+    public ExpenseService(ExpenseRepository expenseRepository,
+                          UserService userService,
+                          AuditLogRepository auditLogRepository) {
+        this.expenseRepository = expenseRepository;
+        this.userService = userService;
+        this.auditLogRepository = auditLogRepository;
+    }
 
     @Transactional
     public Expense createExpense(Expense expense) {
@@ -136,5 +151,49 @@ public class ExpenseService {
 
         validateExpense(expense);
         return expenseRepository.save(expense);
+    }
+
+    public Expense updateExpenseStatusWithComment(Long id, ExpenseStatus status, String comment) {
+        Expense expense = expenseRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Expense not found"));
+
+        if (expense.getStatus() == ExpenseStatus.APPROVED ||
+                expense.getStatus() == ExpenseStatus.REJECTED) {
+            throw new RuntimeException("Cannot modify an expense that is already " + expense.getStatus());
+        }
+
+        expense.setStatus(status);
+        if (comment != null && !comment.trim().isEmpty()) {
+            expense.setStatusComment(comment);
+        }
+
+
+        auditLogRepository.save(createAuditLog(expense, status));
+
+        return expenseRepository.save(expense);
+    }
+
+    public List<Expense> getExpensesByDepartmentAndStatus(Long departmentId, ExpenseStatus status) {
+        return expenseRepository.findByDepartmentIdAndStatus(departmentId, status);
+    }
+
+    public List<Expense> getCurrentUserDepartmentPendingExpenses() {
+        User currentUser = userService.getCurrentUser();
+        if (currentUser.getDepartment() == null) {
+            throw new RuntimeException("Current user is not assigned to any department");
+        }
+        return expenseRepository.findByDepartmentIdAndStatus(
+                currentUser.getDepartment().getId(),
+                ExpenseStatus.PENDING
+        );
+    }
+
+    private AuditLog createAuditLog(Expense expense, ExpenseStatus newStatus) {
+        AuditLog log = new AuditLog();
+        log.setUser(userService.getCurrentUser());
+        log.setAction("EXPENSE_STATUS_UPDATE");
+        log.setActionDetails("Updated expense ID " + expense.getId() + " status to " + newStatus);
+        log.setActionTimestamp(LocalDateTime.now());
+        return log;
     }
 }

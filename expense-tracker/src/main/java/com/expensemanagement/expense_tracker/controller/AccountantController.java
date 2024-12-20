@@ -35,11 +35,30 @@ public class AccountantController {
     }
 
 
-
     @GetMapping("/statistics")
     @PreAuthorize("hasRole('ACCOUNTANT')")
     public ResponseEntity<Map<String, Object>> getAccountantStatistics() {
         return ResponseEntity.ok(expenseService.getAccountantStatistics());
     }
 
+    @PutMapping("/expenses/{id}/status")
+    @PreAuthorize("hasAnyRole('ACCOUNTANT', 'DEPARTMENT_HEAD')")
+    public ResponseEntity<Expense> updateExpenseStatus(
+            @PathVariable Long id,
+            @RequestParam ExpenseStatus status,
+            @RequestParam(required = false) String comment) {
+        return ResponseEntity.ok(expenseService.updateExpenseStatusWithComment(id, status, comment));
+    }
+
+    @GetMapping("/expenses/department/{departmentId}/pending")
+    @PreAuthorize("hasRole('DEPARTMENT_HEAD')")
+    public ResponseEntity<List<Expense>> getDepartmentPendingExpenses(@PathVariable Long departmentId) {
+        return ResponseEntity.ok(expenseService.getExpensesByDepartmentAndStatus(departmentId, ExpenseStatus.PENDING));
+    }
+
+    @GetMapping("/expenses/my-department/pending")
+    @PreAuthorize("hasRole('DEPARTMENT_HEAD')")
+    public ResponseEntity<List<Expense>> getMyDepartmentPendingExpenses() {
+        return ResponseEntity.ok(expenseService.getCurrentUserDepartmentPendingExpenses());
+    }
 }

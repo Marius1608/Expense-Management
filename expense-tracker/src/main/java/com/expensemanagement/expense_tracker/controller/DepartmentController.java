@@ -10,6 +10,7 @@ import java.util.List;
 
 @RequestMapping("/api/departments")
 public class DepartmentController {
+
     @Autowired
     private DepartmentService departmentService;
 

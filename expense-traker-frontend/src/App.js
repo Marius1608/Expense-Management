@@ -3,6 +3,7 @@ import CssBaseline from '@mui/material/CssBaseline';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import Box from '@mui/material/Box';
 
+// Core components
 import Dashboard from './components/Dashboard';
 import Login from './components/Login';
 import Register from './components/Register';
@@ -10,11 +11,16 @@ import Layout from './components/Layout';
 import ExpenseList from './components/ExpenseList';
 import ExpenseForm from './components/ExpenseForm';
 import Reports from './components/Reports';
+
+// Role-specific components
 import AdminDashboard from './components/AdminDashboard';
 import AdminReports from './components/AdminReports';
-import ExpenseRequest from './components/ExpenseRequest';
 import AccountantDashboard from './components/AccountantDashboard';
+import AccountantReports from './components/AccountantReports';
 import DepartmentHeadDashboard from './components/DepartmentHeadDashboard';
+import DepartmentHeadReports from './components/DepartmentHeadReports';
+import ExpenseRequest from './components/ExpenseRequest';
+
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 
 const theme = createTheme({
@@ -83,9 +89,11 @@ function App() {
         <BrowserRouter>
           <Box sx={{ display: 'flex' }}>
             <Routes>
+              {/* Public routes */}
               <Route path="/login" element={<Login />} />
               <Route path="/register" element={<Register />} />
               
+              {/* Protected routes */}
               <Route
                 path="/"
                 element={
@@ -94,12 +102,17 @@ function App() {
                   </ProtectedRoute>
                 }
               >
-                {/* Common Routes */}
+                {/* Dashboard route */}
                 <Route index element={<Dashboard />} />
+
+                {/* Common routes for all authenticated users */}
+                <Route path="expenses" element={<ExpenseList />} />
+                <Route path="expenses/new" element={<ExpenseForm />} />
+                <Route path="reports" element={<Reports />} />
                 
-                {/* Employee Routes */}
+                {/* Employee routes */}
                 <Route
-                  path="expense-requests"
+                  path="expenses/requests"
                   element={
                     <ProtectedRoute allowedRoles={['EMPLOYEE']}>
                       <ExpenseRequest />
@@ -107,20 +120,12 @@ function App() {
                   }
                 />
                 
-                {/* Admin Routes */}
+                {/* Admin routes */}
                 <Route
                   path="admin"
                   element={
                     <ProtectedRoute allowedRoles={['ADMIN']}>
                       <AdminDashboard />
-                    </ProtectedRoute>
-                  }
-                />
-                <Route
-                  path="admin/reports"
-                  element={
-                    <ProtectedRoute allowedRoles={['ADMIN']}>
-                      <AdminReports />
                     </ProtectedRoute>
                   }
                 />
@@ -133,7 +138,6 @@ function App() {
                   }
                 />
                 
-                {/* Accountant Routes */}
                 <Route
                   path="accountant"
                   element={
@@ -143,15 +147,22 @@ function App() {
                   }
                 />
                 <Route
-                  path="expenses/review"
+                  path="accountant/reports"
+                  element={
+                    <ProtectedRoute allowedRoles={['ACCOUNTANT']}>
+                      <AccountantReports />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="accountant/review"
                   element={
                     <ProtectedRoute allowedRoles={['ACCOUNTANT']}>
                       <ExpenseList />
                     </ProtectedRoute>
                   }
                 />
-                
-                {/* Department Head Routes */}
+                 
                 <Route
                   path="department"
                   element={
@@ -161,18 +172,21 @@ function App() {
                   }
                 />
                 <Route
-                  path="expenses/approve"
+                  path="department/reports"
+                  element={
+                    <ProtectedRoute allowedRoles={['DEPARTMENT_HEAD']}>
+                      <DepartmentHeadReports />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="department/approve"
                   element={
                     <ProtectedRoute allowedRoles={['DEPARTMENT_HEAD']}>
                       <ExpenseList />
                     </ProtectedRoute>
                   }
                 />
-                
-                {/* Routes accessible by all authenticated users */}
-                <Route path="expenses" element={<ExpenseList />} />
-                <Route path="expenses/new" element={<ExpenseForm />} />
-                <Route path="reports" element={<Reports />} />
               </Route>
             </Routes>
           </Box>

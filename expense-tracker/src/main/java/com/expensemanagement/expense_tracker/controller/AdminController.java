@@ -5,7 +5,6 @@ import com.expensemanagement.expense_tracker.repository.UserRepository;
 import com.expensemanagement.expense_tracker.service.AdminService;
 import com.expensemanagement.expense_tracker.service.DepartmentService;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -118,83 +117,6 @@ public class AdminController {
             }
 
             return ResponseEntity.ok(departmentService.getAllDepartments());
-        } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
-        }
-    }
-
-
-    @GetMapping("/reports/summary")
-    public ResponseEntity<Map<String, Object>> getExpenseSummary(
-            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
-            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate,
-            Authentication authentication) {
-        try {
-            String username = authentication.getName();
-            User admin = userRepository.findByUsername(username);
-
-            if (admin == null) {
-                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
-            }
-
-            return ResponseEntity.ok(adminService.generateExpenseSummary(startDate, endDate));
-        } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
-        }
-    }
-
-    @GetMapping("/reports/by-department")
-    public ResponseEntity<List<Map<String, Object>>> getExpensesByDepartment(
-            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
-            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate,
-            Authentication authentication) {
-        try {
-            String username = authentication.getName();
-            User admin = userRepository.findByUsername(username);
-
-            if (admin == null) {
-                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
-            }
-
-            return ResponseEntity.ok(adminService.getExpensesByDepartment(startDate, endDate));
-        } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
-        }
-    }
-
-    @GetMapping("/reports/by-category")
-    public ResponseEntity<List<Map<String, Object>>> getExpensesByCategory(
-            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
-            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate,
-            Authentication authentication) {
-        try {
-            String username = authentication.getName();
-            User admin = userRepository.findByUsername(username);
-
-            if (admin == null) {
-                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
-            }
-
-            return ResponseEntity.ok(adminService.getExpensesByCategory(startDate, endDate));
-        } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
-        }
-    }
-
-    @GetMapping("/audit-logs")
-    public ResponseEntity<List<AuditLog>> getAuditLogs(
-            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
-            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate,
-            Authentication authentication) {
-        try {
-            String username = authentication.getName();
-            User admin = userRepository.findByUsername(username);
-
-            if (admin == null) {
-                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
-            }
-
-            return ResponseEntity.ok(adminService.getAuditLogs(startDate, endDate));
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
         }

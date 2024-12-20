@@ -33,4 +33,14 @@ public class Expense {
     @ManyToOne
     @JoinColumn(name = "category_id")
     private ExpenseCategory category;
+
+    @Column(name = "status_comment")
+    private String statusComment;
+
+    @Column(name = "last_modified_date")
+    private LocalDateTime lastModifiedDate;
+
+    @ManyToOne
+    @JoinColumn(name = "last_modified_by")
+    private User lastModifiedBy;
 }
