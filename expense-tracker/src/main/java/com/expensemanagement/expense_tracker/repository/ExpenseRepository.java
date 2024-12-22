@@ -39,4 +39,17 @@ public interface ExpenseRepository extends JpaRepository<Expense, Long> {
             @Param("departmentId") Long departmentId,
             @Param("status") ExpenseStatus status
     );
+
+    @Query("SELECT e FROM Expense e WHERE e.department.id = :departmentId AND CAST(e.date AS LocalDate) BETWEEN :startDate AND :endDate")
+    List<Expense> findByDepartmentIdAndDateBetween(
+            @Param("departmentId") Long departmentId,
+            @Param("startDate") LocalDate startDate,
+            @Param("endDate") LocalDate endDate
+    );
+
+    @Query("SELECT COUNT(e) FROM Expense e WHERE e.department.id = :departmentId AND e.status = :status")
+    long countByDepartmentIdAndStatus(
+            @Param("departmentId") Long departmentId,
+            @Param("status") ExpenseStatus status
+    );
 }

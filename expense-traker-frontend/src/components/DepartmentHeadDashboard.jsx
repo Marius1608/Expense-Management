@@ -3,173 +3,211 @@ import {
   Box,
   Paper,
   Typography,
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableHead,
-  TableRow,
+  Grid,
+  TextField,
   Button,
-  Chip,
+  Card,
+  CardContent,
   Alert,
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
-  TextField
+  CircularProgress,
+  FormControl,
+  InputLabel
 } from '@mui/material';
-import { useAuth } from '../contexts/AuthContext';
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LineChart, Line, Legend } from 'recharts';
 
-export default function DepartmentHeadDashboard() {
-  const [pendingExpenses, setPendingExpenses] = useState([]);
-  const [selectedExpense, setSelectedExpense] = useState(null);
-  const [dialogOpen, setDialogOpen] = useState(false);
-  const [comment, setComment] = useState('');
-  const [alert, setAlert] = useState({ show: false, message: '', severity: 'success' });
-  const { user } = useAuth();
+export default function DepartmentHeadReports() {
+  const [dateRange, setDateRange] = useState({ startDate: '', endDate: '' });
+  const [reportData, setReportData] = useState(null);
+  const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [departmentInfo, setDepartmentInfo] = useState(null);
 
   useEffect(() => {
-    fetchPendingExpenses();
+    fetchDepartmentInfo();
   }, []);
 
-  const fetchPendingExpenses = async () => {
+  const fetchDepartmentInfo = async () => {
     try {
-      const response = await fetch(`http://localhost:8080/api/expenses/department/${user?.department?.id}/pending`);
+      const response = await fetch('http://localhost:8080/api/users/current/department', {
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
+        }
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to fetch department information');
+      }
+
       const data = await response.json();
-      setPendingExpenses(data);
+      setDepartmentInfo(data);
     } catch (error) {
-      console.error('Error fetching pending expenses:', error);
+      console.error('Error fetching department info:', error);
+      setError('Failed to fetch department information. Please try again later.');
     }
   };
 
-  const handleApproveReject = async (expenseId, status) => {
+  const generateReport = async () => {
+    if (!departmentInfo?.id) {
+      setError('Department information not available');
+      return;
+    }
+
+    if (!dateRange.startDate || !dateRange.endDate) {
+      setError('Please select both start and end dates');
+      return;
+    }
+
     try {
-      const response = await fetch(`http://localhost:8080/api/expenses/${expenseId}/status`, {
-        method: 'PUT',
+      setError('');
+      setLoading(true);
+
+      const response = await fetch(`http://localhost:8080/api/reports/department/${departmentInfo.id}`, {
+        method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${localStorage.getItem('token')}`
         },
-        body: JSON.stringify({ status, comment })
+        body: JSON.stringify({
+          startDate: dateRange.startDate,
+          endDate: dateRange.endDate,
+          reportType: 'overview'
+        })
       });
 
-      if (response.ok) {
-        setAlert({
-          show: true,
-          message: `Expense ${status.toLowerCase()} successfully`,
-          severity: 'success'
-        });
-        fetchPendingExpenses();
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to generate report');
       }
+
+      const data = await response.json();
+      setReportData(data);
     } catch (error) {
-      setAlert({
-        show: true,
-        message: 'Error updating expense status',
-        severity: 'error'
-      });
+      console.error('Error generating report:', error);
+      setError(error.message || 'Failed to generate report');
+    } finally {
+      setLoading(false);
     }
-    setDialogOpen(false);
-    setComment('');
   };
 
   return (
     <Box>
-      {alert.show && (
-        <Alert severity={alert.severity} sx={{ mb: 2 }} onClose={() => setAlert({ ...alert, show: false })}>
-          {alert.message}
+      <Typography variant="h5" gutterBottom>
+        Department Reports - {departmentInfo?.name || 'Loading...'}
+      </Typography>
+
+      {error && (
+        <Alert severity="error" sx={{ mb: 2 }} onClose={() => setError('')}>
+          {error}
         </Alert>
       )}
 
-      <Typography variant="h5" sx={{ mb: 3 }}>
-        Department Expenses Approval
-      </Typography>
+      <Paper sx={{ p: 3, mb: 3 }}>
+        <Grid container spacing={3} component="form" noValidate>
+          <Grid item xs={12} sm={4}>
+            <FormControl fullWidth>
+              <InputLabel htmlFor="start-date" shrink>
+                Start Date
+              </InputLabel>
+              <TextField
+                id="start-date"
+                name="startDate"
+                type="date"
+                fullWidth
+                value={dateRange.startDate}
+                onChange={(e) => setDateRange({ ...dateRange, startDate: e.target.value })}
+                disabled={loading}
+                inputProps={{
+                  'aria-label': 'Start date for report generation',
+                }}
+                InputLabelProps={{ shrink: true }}
+              />
+            </FormControl>
+          </Grid>
+          <Grid item xs={12} sm={4}>
+            <FormControl fullWidth>
+              <InputLabel htmlFor="end-date" shrink>
+                End Date
+              </InputLabel>
+              <TextField
+                id="end-date"
+                name="endDate"
+                type="date"
+                fullWidth
+                value={dateRange.endDate}
+                onChange={(e) => setDateRange({ ...dateRange, endDate: e.target.value })}
+                disabled={loading}
+                inputProps={{
+                  'aria-label': 'End date for report generation',
+                }}
+                InputLabelProps={{ shrink: true }}
+              />
+            </FormControl>
+          </Grid>
+          <Grid item xs={12} sm={4}>
+            <Button
+              variant="contained"
+              fullWidth
+              onClick={generateReport}
+              disabled={loading || !departmentInfo?.id}
+              sx={{ height: '56px' }}
+              aria-label="Generate department report"
+            >
+              {loading ? <CircularProgress size={24} /> : 'Generate Report'}
+            </Button>
+          </Grid>
+        </Grid>
+      </Paper>
 
-      <TableContainer component={Paper}>
-        <Table>
-          <TableHead>
-            <TableRow>
-              <TableCell>Employee</TableCell>
-              <TableCell>Description</TableCell>
-              <TableCell>Amount</TableCell>
-              <TableCell>Date</TableCell>
-              <TableCell>Status</TableCell>
-              <TableCell>Actions</TableCell>
-            </TableRow>
-          </TableHead>
-          <TableBody>
-            {pendingExpenses.map((expense) => (
-              <TableRow key={expense.id}>
-                <TableCell>{expense.user.username}</TableCell>
-                <TableCell>{expense.description}</TableCell>
-                <TableCell>${expense.amount}</TableCell>
-                <TableCell>{new Date(expense.date).toLocaleDateString()}</TableCell>
-                <TableCell>
-                  <Chip 
-                    label={expense.status} 
-                    color={expense.status === 'PENDING' ? 'warning' : 'default'}
-                  />
-                </TableCell>
-                <TableCell>
-                  <Box sx={{ display: 'flex', gap: 1 }}>
-                    <Button
-                      size="small"
-                      variant="contained"
-                      color="success"
-                      onClick={() => {
-                        setSelectedExpense(expense);
-                        setDialogOpen(true);
-                      }}
-                    >
-                      Approve
-                    </Button>
-                    <Button
-                      size="small"
-                      variant="contained"
-                      color="error"
-                      onClick={() => {
-                        setSelectedExpense({ ...expense, action: 'REJECT' });
-                        setDialogOpen(true);
-                      }}
-                    >
-                      Reject
-                    </Button>
-                  </Box>
-                </TableCell>
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
-      </TableContainer>
+      {reportData && (
+        <Card>
+          <CardContent>
+            <Typography variant="h6" gutterBottom>
+              Report Summary
+            </Typography>
+            <Grid container spacing={2}>
+              <Grid item xs={12} md={4}>
+                <Typography variant="body1" component="p">
+                  Total Amount: ${reportData.totalAmount?.toLocaleString() || 0}
+                </Typography>
+              </Grid>
+              <Grid item xs={12} md={4}>
+                <Typography variant="body1" component="p">
+                  Total Expenses: {reportData.totalCount?.toLocaleString() || 0}
+                </Typography>
+              </Grid>
+              <Grid item xs={12} md={4}>
+                <Typography variant="body1" component="p">
+                  Average Amount: ${reportData.averageAmount?.toLocaleString() || 0}
+                </Typography>
+              </Grid>
+            </Grid>
 
-      <Dialog open={dialogOpen} onClose={() => setDialogOpen(false)}>
-        <DialogTitle>
-          {selectedExpense?.action === 'REJECT' ? 'Reject' : 'Approve'} Expense
-        </DialogTitle>
-        <DialogContent>
-          <TextField
-            autoFocus
-            margin="dense"
-            label="Comment"
-            fullWidth
-            multiline
-            rows={4}
-            value={comment}
-            onChange={(e) => setComment(e.target.value)}
-          />
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setDialogOpen(false)}>Cancel</Button>
-          <Button 
-            onClick={() => handleApproveReject(
-              selectedExpense.id, 
-              selectedExpense?.action === 'REJECT' ? 'REJECTED' : 'APPROVED'
+            {reportData.monthlyData && (
+              <Box sx={{ mt: 4, height: 300 }} role="region" aria-label="Monthly expenses chart">
+                <Typography variant="h6" gutterBottom>
+                  Monthly Trends
+                </Typography>
+                <ResponsiveContainer>
+                  <LineChart data={reportData.monthlyData}>
+                    <CartesianGrid strokeDasharray="3 3" />
+                    <XAxis dataKey="month" />
+                    <YAxis />
+                    <Tooltip />
+                    <Legend />
+                    <Line 
+                      type="monotone" 
+                      dataKey="amount" 
+                      stroke="#8884d8" 
+                      name="Amount" 
+                      aria-label="Monthly expense amount"
+                    />
+                  </LineChart>
+                </ResponsiveContainer>
+              </Box>
             )}
-            color={selectedExpense?.action === 'REJECT' ? 'error' : 'success'}
-          >
-            Confirm
-          </Button>
-        </DialogActions>
-      </Dialog>
+          </CardContent>
+        </Card>
+      )}
     </Box>
   );
 }

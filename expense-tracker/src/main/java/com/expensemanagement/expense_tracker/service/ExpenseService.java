@@ -24,6 +24,17 @@ public class ExpenseService {
     private AuditLogRepository auditLogRepository;
     private UserService userService;
 
+
+    @Transactional(readOnly = true)
+    public List<Expense> getExpensesByDateRange(LocalDate startDate, LocalDate endDate) {
+        return expenseRepository.findByDateBetween(startDate, endDate);
+    }
+
+    @Transactional(readOnly = true)
+    public List<Expense> getExpensesByDepartmentAndDateRange(Long departmentId, LocalDate startDate, LocalDate endDate) {
+        return expenseRepository.findByDepartmentIdAndDateBetween(departmentId, startDate, endDate);
+    }
+
     @Autowired
     public ExpenseService(ExpenseRepository expenseRepository,
                           UserService userService,
@@ -196,4 +207,29 @@ public class ExpenseService {
         log.setActionTimestamp(LocalDateTime.now());
         return log;
     }
+
+    public Map<String, Object> getDepartmentSummary(Long departmentId) {
+        Map<String, Object> summary = new HashMap<>();
+        
+        // Calculate total expenses
+        BigDecimal totalExpenses = expenseRepository.findByDepartmentId(departmentId).stream()
+                .map(Expense::getAmount)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+        summary.put("totalExpenses", totalExpenses);
+        
+        // Calculate pending, approved, and rejected expense counts
+        long pendingCount = expenseRepository.countByDepartmentIdAndStatus(departmentId, ExpenseStatus.PENDING);
+        long approvedCount = expenseRepository.countByDepartmentIdAndStatus(departmentId, ExpenseStatus.APPROVED);
+        long rejectedCount = expenseRepository.countByDepartmentIdAndStatus(departmentId, ExpenseStatus.REJECTED);
+        
+        summary.put("pendingCount", pendingCount);
+        summary.put("approvedCount", approvedCount);
+        summary.put("rejectedCount", rejectedCount);
+        
+        return summary;
+        
+    }
+
+
+
 }

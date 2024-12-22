@@ -45,7 +45,10 @@ public class AuthenticationService {
         AuthenticationResponse response = new AuthenticationResponse();
         response.setToken(token);
         response.setUsername(user.getUsername());
-        response.setRole(user.getRole().name());
+        response.setRole(user.getRole().name());if (user.getDepartment() != null) {
+            response.setDepartment(user.getDepartment());
+        }
+
         return response;
     }
 

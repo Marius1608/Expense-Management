@@ -64,37 +64,47 @@ export default function DepartmentHeadReports() {
 
   const generateReport = async () => {
     try {
-      const dateError = validateDates();
-      if (dateError) {
-        setError(dateError);
-        return;
-      }
+        const dateError = validateDates();
+        if (dateError) {
+            setError(dateError);
+            return;
+        }
 
-      setError('');
-      setLoading(true);
+        // Verificăm dacă avem un department ID valid
+        if (!user?.department?.id) {
+            setError('Department ID not found');
+            return;
+        }
 
-      const response = await fetch(`http://localhost:8080/api/reports/department/${user?.department?.id}`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
-        },
-        body: JSON.stringify({ ...dateRange, reportType })
-      });
+        setError('');
+        setLoading(true);
 
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.message || 'Failed to generate report');
-      }
+        const response = await fetch(`http://localhost:8080/api/reports/department/${user.department.id}`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${localStorage.getItem('token')}`
+            },
+            body: JSON.stringify({ 
+                startDate: dateRange.startDate,
+                endDate: dateRange.endDate,
+                reportType 
+            })
+        });
 
-      const data = await response.json();
-      setReportData(data);
+        if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(errorData.message || 'Failed to generate report');
+        }
+
+        const data = await response.json();
+        setReportData(data);
     } catch (error) {
-      setError(error.message);
+        setError(error.message);
     } finally {
-      setLoading(false);
+        setLoading(false);
     }
-  };
+};
 
   const resetFilters = () => {
     setDateRange({ startDate: '', endDate: '' });
@@ -143,9 +153,6 @@ export default function DepartmentHeadReports() {
                 disabled={loading}
               >
                 <MenuItem value="overview">Overview</MenuItem>
-                <MenuItem value="byEmployee">By Employee</MenuItem>
-                <MenuItem value="byCategory">By Category</MenuItem>
-                <MenuItem value="byStatus">By Status</MenuItem>
               </Select>
             </FormControl>
           </Grid>
