@@ -42,7 +42,6 @@ export default function AccountantDashboard() {
         },
         body: JSON.stringify({ status: 'APPROVED' })
       });
-      // Refresh expenses list
       fetchPendingExpenses();
     } catch (error) {
       console.error('Error approving expense:', error);

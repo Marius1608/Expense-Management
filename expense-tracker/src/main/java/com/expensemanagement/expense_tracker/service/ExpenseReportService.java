@@ -20,7 +20,6 @@ public class ExpenseReportService {
     private ExpenseRepository expenseRepository;
 
     public ExpenseReport generateReport(LocalDate startDate, LocalDate endDate, User user) {
-        // Now using LocalDate directly without conversion
         List<Expense> expenses = expenseRepository.findByDateBetween(startDate, endDate);
 
         BigDecimal totalAmount = expenses.stream()

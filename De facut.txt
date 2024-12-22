@@ -1,6 +1,0 @@
-1.contabil si manager-sa aprobe cheltuielile 
-2.sa mearga raportul detaliat
-3.modificat design 
-4.adaugat raport detaliat pentru contabil si manager
-5.adaugat attachment 
-

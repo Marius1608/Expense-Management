@@ -3,7 +3,6 @@ package com.expensemanagement.expense_tracker.service;
 import com.expensemanagement.expense_tracker.model.Attachment;
 import com.expensemanagement.expense_tracker.model.Expense;
 import com.expensemanagement.expense_tracker.repository.AttachmentRepository;
-import lombok.Value;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;

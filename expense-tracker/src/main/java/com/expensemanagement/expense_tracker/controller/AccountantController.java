@@ -77,7 +77,6 @@ public class AccountantController {
             Map<String, Object> reportData = new HashMap<>();
             List<Expense> expenses = expenseService.getExpensesByDateRange(startDate, endDate);
 
-            // Calculate totals
             BigDecimal totalAmount = expenses.stream()
                     .map(Expense::getAmount)
                     .reduce(BigDecimal.ZERO, BigDecimal::add);

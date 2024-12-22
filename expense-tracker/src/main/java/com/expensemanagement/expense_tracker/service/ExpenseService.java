@@ -210,14 +210,12 @@ public class ExpenseService {
 
     public Map<String, Object> getDepartmentSummary(Long departmentId) {
         Map<String, Object> summary = new HashMap<>();
-        
-        // Calculate total expenses
+
         BigDecimal totalExpenses = expenseRepository.findByDepartmentId(departmentId).stream()
                 .map(Expense::getAmount)
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
         summary.put("totalExpenses", totalExpenses);
-        
-        // Calculate pending, approved, and rejected expense counts
+
         long pendingCount = expenseRepository.countByDepartmentIdAndStatus(departmentId, ExpenseStatus.PENDING);
         long approvedCount = expenseRepository.countByDepartmentIdAndStatus(departmentId, ExpenseStatus.APPROVED);
         long rejectedCount = expenseRepository.countByDepartmentIdAndStatus(departmentId, ExpenseStatus.REJECTED);

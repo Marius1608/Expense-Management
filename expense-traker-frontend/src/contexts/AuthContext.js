@@ -4,7 +4,7 @@ import { jwtDecode } from 'jwt-decode';
 
 const AuthContext = createContext();
 
-const TOKEN_REFRESH_THRESHOLD = 5 * 60; // 5 minutes in seconds
+const TOKEN_REFRESH_THRESHOLD = 5 * 60; 
 
 export function AuthProvider({ children }) {
   const [token, setToken] = useState(localStorage.getItem('token'));

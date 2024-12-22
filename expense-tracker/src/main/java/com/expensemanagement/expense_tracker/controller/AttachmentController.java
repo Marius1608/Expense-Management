@@ -24,7 +24,7 @@ public class AttachmentController {
     public ResponseEntity<Attachment> uploadAttachment(
             @RequestParam("file") MultipartFile file,
             @RequestParam("expenseId") Long expenseId) throws IOException {
-        ExpenseService expenseService = null; //
+        ExpenseService expenseService = null;
         Expense expense = expenseService.getExpenseById(expenseId);
         return ResponseEntity.ok(attachmentService.saveAttachment(file, expense));
     }

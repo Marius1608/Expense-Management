@@ -1,4 +1,3 @@
-// JwtTokenUtil.java
 package com.expensemanagement.expense_tracker.security;
 
 import io.jsonwebtoken.Claims;

@@ -54,8 +54,6 @@ public class ReportController {
             }
 
             ExpenseReport report = reportService.generateReport(startDate, endDate, currentUser);
-
-            // Convert report to response format
             Map<String, Object> response = new HashMap<>();
             response.put("totalAmount", report.getTotalAmount());
             response.put("createdAt", report.getCreatedAt());
